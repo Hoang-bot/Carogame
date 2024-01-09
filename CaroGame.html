@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Caro Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .game-board {
+            display: none;
+            margin-top: 20px;
+            border: 2px solid #333;
+            border-collapse: collapse;
+        }
+
+        .game-board td {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            font-size: 36px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .game-board td.X {
+            color: red; /* Màu đỏ cho X */
+        }
+
+        .game-board td.O {
+            color: green; /* Màu xanh cho O */
+        }
+
+        .game-board td:hover {
+            background-color: #f0f0f0;
+        }
+
+        .score {
+            margin-top: 20px;
+            display: none; /* Ẩn tỉ số khi khởi động */
+        }
+
+        .score span {
+            display: inline-block;
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Caro Game</h1>
+        <button class="button" onclick="startGame()">Chơi Game</button>
+        <button class="button" onclick="showInstructions()">Hướng Dẫn</button>
+        <button class="button" onclick="exitGame()">Thoát</button>
+        
+        <table class="game-board" id="board"></table>
+
+        <div class="score">
+            <span>Player X: <span id="playerXScore">0</span></span>
+            <span>Player O: <span id="playerOScore">0</span></span>
+        </div>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const playerXScoreDisplay = document.getElementById('playerXScore');
+        const playerOScoreDisplay = document.getElementById('playerOScore');
+        const scoreSection = document.querySelector('.score');
+        const size = 10;
+        let currentPlayer = 'O';
+        let gameEnded = false;
+        let playerXScore = 0;
+        let playerOScore = 0;
+
+        function startGame() {
+            board.innerHTML = '';
+            for (let i = 0; i < size; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < size; j++) {
+                    const cell = document.createElement('td');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', cellClick);
+                    row.appendChild(cell);
+                }
+                board.appendChild(row);
+            }
+            document.querySelector('.game-board').style.display = 'block';
+            scoreSection.style.display = 'block'; // Hiển thị tỉ số khi bắt đầu game
+            gameEnded = false;
+
+            // Đảo người chơi đi trước sau mỗi ván
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        }
+
+        function cellClick() {
+            if (gameEnded) return;
+
+            const row = parseInt(this.dataset.row);
+            const col = parseInt(this.dataset.col);
+
+            if (this.textContent === '') {
+                this.textContent = currentPlayer;
+                this.classList.add(currentPlayer);
+
+                if (checkWin(row, col)) {
+                    gameEnded = true;
+                    if (currentPlayer === 'X') {
+                        playerXScore++;
+                        playerXScoreDisplay.textContent = playerXScore;
+                    } else {
+                        playerOScore++;
+                        playerOScoreDisplay.textContent = playerOScore;
+                    }
+                    alert(`Player ${currentPlayer} wins!`);
+                    return;
+                }
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            } else {
+                alert('This cell is already taken!');
+            }
+        }
+
+        function checkWin(row, col) {
+            // Kiểm tra hàng ngang
+            let count = 1;
+            let i = row, j = col - 1;
+            while (j >= 0 && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                j--;
+            }
+            j = col + 1;
+            while (j < size && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                j++;
+            }
+            if (count >= 5) return true;
+
+            // Kiểm tra hàng dọc
+            count = 1;
+            i = row - 1, j = col;
+            while (i >= 0 && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i--;
+            }
+            i = row + 1;
+            while (i < size && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i++;
+            }
+            if (count >= 5) return true;
+
+            // Kiểm tra đường chéo chính (trái trên -> phải dưới)
+            count = 1;
+            i = row - 1, j = col - 1;
+            while (i >= 0 && j >= 0 && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i--;
+                j--;
+            }
+            i = row + 1, j = col + 1;
+            while (i < size && j < size && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i++;
+                j++;
+            }
+            if (count >= 5) return true;
+
+            // Kiểm tra đường chéo phụ (trái dưới -> phải trên)
+            count = 1;
+            i = row + 1, j = col - 1;
+            while (i < size && j >= 0 && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i++;
+                j--;
+            }
+            i = row - 1, j = col + 1;
+            while (i >= 0 && j < size && board.rows[i].cells[j].textContent === currentPlayer) {
+                count++;
+                i--;
+                j++;
+            }
+            if (count >= 5) return true;
+
+            return false;
+        }
+
+        function showInstructions() {
+            const instructions = `Luật chơi Caro:
+                Caro là trò chơi hai người chơi lượt lẻ, thường chơi trên bảng kích thước 11x11.
+                Người chơi nào tạo ra một hàng ngang, cột dọc hoặc đường chéo gồm 5 quân cờ của mình trước sẽ chiến thắng.`;
+            
+            alert(instructions);
+        }
+
+        function exitGame() {
+            const canClose = confirm("Are you sure you want to exit?");
+            if (canClose) {
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html>
